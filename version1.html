@@ -1,0 +1,545 @@
+<script>
+   const tour = function(){
+    // Tour steps with the required properties.
+    let state = {
+        currentTour : 0,
+        isTourActive : false,
+        forward : false,
+        backward : false,
+        modalExist : false,
+        intialized : false
+    };
+    const tourSteps = [
+        {
+            targetElement:".table-view__group-title--3Fvi9 span",
+            title:"Shop by Product Category1",
+            content:"Table view organizes products into category groups to help you shop faster.",
+        },
+        {
+            targetElement:".accordion-title__child--2RiBK.accordion-title__child--right--2RiBK",
+            title:"Shop by Product Category2",
+            content:"Table view organizes products into category groups to help you shop faster.Table view organizes products into category groups to help you shop faster",
+        },
+        {
+            targetElement:".table-results-view__table-cell-border--3Fvi9",
+            title:"Shop by Product Category3",
+            content:"Table view organizes products into category groups to help you shop faster.",
+        }
+    ];
+//Intialize the tour
+    function init(){
+        // class guided-tour-step-first active
+        if(!state.intialized){
+            tourSteps.forEach((tour,index) =>{
+                let node = document.createElement("div");
+                //role="dialog" data-steps="step-${index}" class="guided-tour-step ${index == 0 ?"guided-tour-step-first":""}"
+                node.classList.add("guided-tour-step");
+                node.classList.add(`${index == 0 ?"guided-tour-step-first":index}`);
+                node.dataset.steps = "step-"+index;
+                let titleHtml = '<div class="guided-tour-step-highlight"><div role="tooltip" class="guided-tour-step-tooltip"><div aria-hidden="true" class="guided-tour-arrow"></div><div class="guided-tour-step-content-wrapper"><div role="heading" class="guided-tour-step-title">';
+                titleHtml += tour.title + '</div>';
+                
+                let contentHtml = '<div class="guided-tour-step-content">'+tour.content+'</div></div>'
+                let closeButtonHtml = '<span role="button" class="guided-tour-step-button guided-tour-step-button-close" id="end-tour-'+index+'" title="End tour"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.00003 6.58691L2.00003 0.586914L0.585815 2.00113L6.58582 8.00113L0.585815 14.0011L2.00003 15.4153L8.00003 9.41534L14 15.4153L15.4142 14.0011L9.41424 8.00113L15.4142 2.00113L14 0.586914L8.00003 6.58691Z" fill="#121111"/></svg></span><div class="guided-tour-step-footer">';
+                let stepNumberHtml = '<span>Step '+(index + 1)+' of '+tourSteps.length + '</span><div class="guided-tour-step-footer-btn">';
+                let footerPrevHtml = '';
+                if(index > 0){
+                    footerPrevHtml += '<button class="prev-btn" data-prev="'+(index - 1)+'"' + 'id="prev-btn-'+index+'">Previous</button>';
+                }
+                let nextBtnHtml = '<button class="next-btn" data-next="'+(index + 1) +'"'+ 'id="next-btn-'+index+'">';
+                if(index == tourSteps.length-1){
+                    nextBtnHtml += 'Get Started';
+                }
+                else{
+                    nextBtnHtml += 'Next'
+                }
+                let endHtml = '</button></div></div></div></div>';
+                let totalHtml = titleHtml + contentHtml + closeButtonHtml + stepNumberHtml + footerPrevHtml + nextBtnHtml + endHtml;
+                node.innerHTML = totalHtml;
+                document.body.appendChild(node);
+    
+                // Next button
+                let nextBtn = document.getElementById("next-btn-" + index);
+                nextBtn.onclick = function(){
+                    nextStep(index + 1);
+                };
+                // Prev button
+                if(index != 0){
+                    console.log("pre button index" + index)
+                    let preBtn = document.getElementById("prev-btn-" + index);
+                    preBtn.onclick = function(){
+                        prevStep(index - 1);
+                    };                    
+                }
+                // Close button
+                let closeBtn = document.getElementById("end-tour-" + index);
+                closeBtn.onclick = function(e){
+                    close(e);
+                }        
+            });
+            state.intialized = true;
+        }
+    }
+    function popup(){
+        // Check if tour modal already created.
+        if(!state.modalExist){
+            let modal = document.createElement("div");
+            modal.id = "tour-modal";
+            modal.className="tour-modal";
+            modal.innerHTML=`
+            <div class="modal-wrapper">
+                <div class="modal-content-wrapper">
+                    <div class="modal-content">
+                        <img src="http://via.placeholder.com/640x360" alt="">
+                        <h2>
+                            Shopping for Job Materials Just Got Easier
+                        </h2>
+                        <p>Use our new table view option to find and purchase the hardware and building materials you need for the job.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="footer-btn">
+                            <button class="skip-btn" id="skip-btn"> Maybe Later</button>
+                            <button class="tour-btn" id="tour-btn"> Take the Tour</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            document.body.appendChild(modal);
+            state.modalExist = true;
+            // Take to tour
+            let tourBtn = document.getElementById("tour-btn");
+            
+            tourBtn.onclick = function(){
+                modal.style.display="none";
+            // Disable body scroll while modal opened
+                document.body.style.overflow = "hidden";
+                showOverlay(tourSteps[0].targetElement,0);
+                state.currentTour = 0;
+                state.isTourActive = true;
+            }
+            // Get skip tour
+            let skpBtn = document.getElementById("skip-btn");
+            
+            // When the page loaded show the tour pop up 
+              modal.style.display = "block";
+            
+              // when the user click on skip tour
+            skpBtn.onclick = function(){
+                // hide modal
+                modal.style.display = "none";
+                
+                //enable the body scroll 
+                document.body.style.overflow = 'auto';
+            }
+            // When the user clicks anywhere outside of the modal, close it
+            window.onclick = function(event) {
+              if (event.target == modal) {
+                modal.style.display = "none";
+                //enable the body scroll 
+                document.body.style.overflow = 'auto';
+              }
+            }
+        }
+        else{
+            let modal = document.getElementById("tour-modal");
+            // Show the tour modal
+            modal.style.display = "block";
+        }
+    }
+// Get how far is element from x-axis and y-axis
+    function getElementPosition(el) {
+        let dimensions = el.getBoundingClientRect();
+        return dimensions;
+    }
+
+    // it will show the overlay
+    function showOverlay(className,idx){
+        console.log("index:::"+idx)
+        let index = parseInt(idx);
+        let isMobile = window.matchMedia("only screen and (max-width: 760px)").matches;
+        // To support the older browser document.documentElement
+        let windowHeight = window.innerHeight || document.documentElement.clientHeight;
+        let windowWidth = window.innerWidth || document.documentElement.clientWidth;
+        let elm = document.querySelectorAll(className);
+        if(elm.length != 0){
+            elm[0].scrollIntoView();
+            let targetEleDimensions = getElementPosition(elm[0]);
+            let thresholdValue = 250;
+            // Get the tour template
+            let allTour = document.querySelectorAll(".guided-tour-step");
+            for(let i = 0; i < allTour.length; i++){
+                if(index == i){
+                    state.currentTour = i;
+                    allTour[i].classList.add("active");
+                    let expectedOverlaySize = Math.max(targetEleDimensions.height,targetEleDimensions.width);
+                    let overlaySize =  expectedOverlaySize > thresholdValue ? 2*targetEleDimensions.height: expectedOverlaySize;
+                    let highLighter = allTour[i].children[0];
+                    highLighter.style.top = (targetEleDimensions.y - (targetEleDimensions.height/2)) + 'px';
+                    highLighter.style.left = targetEleDimensions.x + 'px';
+                    highLighter.style.width =  overlaySize + 'px';
+                    highLighter.style.height =  overlaySize + 'px';
+                    let tooltip = highLighter.children[0];
+                    tooltip.style.visibility = "visible";
+                    tooltip.style.opacity = 1;
+                    if(!isMobile){
+                    let tipTop = overlaySize + 10, tipLeft = 0;
+                    
+                    // Tooltip Arrow
+                    let tooltipArrow = tooltip.children[0];
+                    // Arrow left
+                    let aleft = overlaySize/2;
+                    if(tooltip.clientWidth + targetEleDimensions.x > windowWidth){
+                        tooltipArrow.style.removeProperty("left");
+                        tooltipArrow.style.right = aleft + 26 + 'px'; 
+                    }
+                    else{
+                        tooltipArrow.style.left = aleft + 10 + 'px';
+                        tooltipArrow.style.removeProperty("right"); 
+                    }
+                    if(tooltip.clientHeight + targetEleDimensions.y > windowHeight){
+                        // tipTop = -(((2 * tooltip.clientHeight) + targetEleDimensions.top) - windowHeight);
+                        tooltipArrow.style.top = tooltip.clientHeight + 'px';
+                    }
+
+                    // Handle if it goes out side the window vertically down
+                    if(tooltip.clientHeight + targetEleDimensions.y > windowHeight){
+                        // tipTop = -(((2 * tooltip.clientHeight) + targetEleDimensions.top) - windowHeight);
+                        tipTop = -(tooltip.clientHeight + 22);
+                        windowHeight = window.innerHeight;
+                        highLighter.style.top  = (windowHeight - overlaySize) + 'px';
+                    }
+                        // Hanlde if it goes out side the window horizontally to left
+                    if(tooltip.clientWidth + targetEleDimensions.x > windowWidth){
+                        tipLeft = -((tooltip.clientWidth + targetEleDimensions.left + 20) - windowWidth);
+                        // tooltipArrow.style.right = -aleft + 'px'; 
+                    }
+
+                    // tooltip.style.top =  (targetEleDimensions.top + 100) + 'px';
+                    tooltip.style.top = tipTop + 'px';
+                    tooltip.style.left = (10 + tipLeft) + 'px';
+                } 
+                else{
+                    console.log("Mobile");
+                    tooltip.style.top = '100vh';
+                    tooltip.style.left = 0;
+                    // Handle if it goes out side the window vertically down
+                    if(targetEleDimensions.y + targetEleDimensions.height >= windowHeight){
+                        // tipTop = -(((2 * tooltip.clientHeight) + targetEleDimensions.top) - windowHeight);
+                        console.log("y: "+targetEleDimensions.y);
+                    }
+                }
+                }
+                else{
+                    allTour[i].classList.remove("active");
+                }
+            }
+        }
+        else{
+            // where to go back or forward
+            if(state.forward)
+                nextStep(index + 1);
+            else 
+                prevStep(index - 1);    
+        }
+    }
+ 
+    window.addEventListener("resize",()=>{
+        if(state.isTourActive === true)
+        showOverlay(tourSteps[state.currentTour].targetElement,state.currentTour);
+    });
+    
+    function nextStep(next){
+        if(next == tourSteps.length){
+            close();
+            return;
+        }
+        // current tour direction
+        state.forward = true;
+        state.backward = false;
+        showOverlay(tourSteps[next].targetElement,next);
+    }
+    function prevStep(prev){
+        // current tour direction
+        state.forward = false;
+        state.backward = true;
+        console.log("inside prev:" + prev)
+        showOverlay(tourSteps[prev].targetElement,prev);
+    }   
+    function close(e){
+        let allTour = document.querySelectorAll(".guided-tour-step");
+        for(let i = 0; i < allTour.length; i++){
+            allTour[i].classList.remove("active");
+            state.isTourActive = false;
+            //enable the body scroll 
+            document.body.style.overflow = 'auto';
+        }
+    } 
+    return{
+        init:init,
+        popup:popup
+    };
+}();
+window.onload = function(e){
+    tour.init();
+    tour.popup();
+};
+  </script>
+  <style>
+    /* Guided tour */
+   /* Guided tour */
+.guided-tour-step.active {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1024;
+    pointer-events: all;
+}
+.guided-tour-step.active .guided-tour-step-highlight {
+    position: absolute;
+    box-sizing: border-box;
+    border-radius: 50%;
+    box-shadow: 0 0 0 999em rgb(0 0 0 / 50%);
+    z-index: 1;
+}
+.guided-tour-step.active .guided-tour-step-tooltip {
+    position: absolute;
+    visibility: hidden;
+    padding: 32px 32px 28px 32px;
+    z-index: 999;
+    background-color: #fff;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    /* width: 400px; */
+    min-width: 400px;
+    border-radius: 5px;
+    box-sizing: border-box;
+    box-shadow: 0 0 8px -4px #000;
+    transition: opacity 150ms;
+}
+.guided-tour-step {
+    display: none;
+    text-rendering: optimizespeed;
+    font-family: "Open Sans",Arimo,"Droid Sans",Helvetica,Arial,sans-serif;
+    font-size: 12pt;
+    color: #333;
+}
+.guided-tour-step-title{
+    width: 284px;
+    height: 20px;
+
+    /* Body/Base Bold/tight line height */
+
+    font-family: 'Helvetica Neue LT Pro';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 125%;
+    /* identical to box height, or 20px */
+
+
+    /* UI/Text/Primary */
+    color: #212120;
+}
+.guided-tour-step-content{
+    /* Regular (55 Roman)/Body __ text-normal */
+    font-family: 'Helvetica Neue LT Pro';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 21px;
+    padding-top: 12px;
+    /* or 150% */
+
+    color: #000000;
+}
+.guided-tour-step.active .guided-tour-step-tooltip .guided-tour-arrow {
+    position: absolute;
+    border-top: 8px solid transparent;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    margin-left: -8px;
+    transform: rotate(45deg);
+    top: 0;
+    background-color: #fff;
+    margin-top: -8px;
+}
+.guided-tour-step.active .guided-tour-step-tooltip .guided-tour-arrow-top .guided-tour-arrow {
+    border-bottom-color: #fff;
+    margin-top: -16px;
+    top: 0;
+}
+
+/* Close button */
+
+.guided-tour-step.active .guided-tour-step-tooltip .guided-tour-step-button-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+}
+.guided-tour-step.active .guided-tour-step-tooltip .guided-tour-step-button {
+    flex-direction: column;
+    justify-content: center;
+    display: inline-flex;
+    text-align: center;
+    cursor: pointer;
+}
+.guided-tour-step.active .guided-tour-step-tooltip .guided-tour-step-button .guided-tour-icon {
+    align-self: center;
+}
+.guided-tour-step.active .guided-tour-step-tooltip .guided-tour-icon {
+    display: inline-block;
+    overflow: hidden;
+}
+.guided-tour-step-footer{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+.next-btn{
+/* Auto layout */
+    margin-left: 12px;
+    width: 55%;
+    cursor: pointer;
+    height: 34px;
+    font-weight: 700;
+    color: #FFFFFF;
+    background-color: #F96302;
+    border: none;
+    background: #F96302;
+}
+.prev-btn{
+    display: inline-block;
+    background: #FFFFFF;
+    /* $brand */    
+    width: 45%;
+    font-weight: 700;
+    cursor: pointer;
+    height: 34px;
+    color: #F96302;
+    text-align: center;
+    border: 2px solid #F96302;
+}
+.guided-tour-step-footer-btn{
+    width: 180px;
+    display: flex;
+}
+
+
+/* POPUP MODAL */
+/* MODAL **/
+.tour-modal{
+    display: block; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 99999; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+.modal-wrapper{
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    max-width: 600px;
+    background: #FFFFFF;
+}
+/* Modal Content */
+.modal-content-wrapper {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+}
+.modal-content img{
+    margin-bottom: 10px;
+}
+.modal-content img,h2,p{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 12px;
+    width: 70%;
+}
+.modal-content h2{
+    font-family: 'Helvetica Neue LT Pro';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 40px;
+    margin-bottom: 10px;
+}
+.modal-content p{
+    font-family: 'Helvetica Neue LT Pro';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 28px;
+}
+.footer-btn{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+    margin-top: 18px;
+    margin-bottom: 10px;
+}
+.tour-btn{
+    margin-left: 12px;
+    display: inline-block;
+    width: 40%;
+    cursor: pointer;
+    height: 34px;
+    color: #FFFFFF;
+    background-color: #F96302;
+    border: none;
+    font-weight: 700;
+}
+.skip-btn{
+    display: inline-block;
+    background: #FFFFFF;
+    /* $brand */    
+    font-weight: 700;
+    width: 40%;
+    cursor: pointer;
+    height: 34px;
+    color: #F96302;
+    text-align: center;
+    border: 2px solid #F96302;
+}
+/* Resposive */
+@media only screen and (max-width: 768px){
+    .guided-tour-step.active .guided-tour-step-tooltip {
+        position: fixed;
+        visibility: hidden;
+        padding: 24px 24px 24px 24px;
+        z-index: 999;
+        background-color: #fff;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+        /* width: 400px; */
+        min-width: 400px;
+        top: 100vh;
+        left: 0;
+        transform: translateY(-100%);
+        border-radius: 5px;
+        box-sizing: border-box;
+        box-shadow: 0 0 8px -4px #000;
+        transition: opacity 150ms;
+    }
+    .guided-tour-arrow{
+        display: none;
+    }
+}
+  </style>
